@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+
+    environment {
+        SLACK_CHANNEL = '#build-notification' // Replace with your Slack channel name
+        SLACK_CREDENTIALS_ID = '6i5WQZrqBpf5AwaBVpllRMD7' // Replace with your Slack credentials ID
+    }
+
+    stages {
+        stage('git clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/SwiftSoft-Bahadur/python-helloword.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t 562100/flaskapp .'
+            }
+        }
+
+        stage('Run Docker Image') {
+            steps {
+                sh 'docker stop $(docker ps -a -q)'    
+                sh 'docker run -d -p 5000:5000 562100/flaskapp'
+            }
+        }
+    }
+
+    post {
+        success {
+            slackSend(channel: env.SLACK_CHANNEL, color: 'good', message: "Build and deployment succeeded: ${env.JOB_NAME} - ${env.BUILD_NUMBER}")
+        }
+        failure {
+            slackSend(channel: env.SLACK_CHANNEL, color: 'danger', message: "Build and deployment failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER}")
+        }
+        always {
+            script {
+                def status = currentBuild.currentResult
+                slackSend(channel: env.SLACK_CHANNEL, color: status == 'SUCCESS' ? 'good' : 'danger', message: "Build ${status}: ${env.JOB_NAME} - ${env.BUILD_NUMBER}")
+            }
+        }
+    }
+}

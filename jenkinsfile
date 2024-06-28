@@ -12,6 +12,11 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/SwiftSoft-Bahadur/python-helloword.git'
             }
         }
+        stage('git clone') {
+            steps {
+               sh 'pip install -r requirements.txt'
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
